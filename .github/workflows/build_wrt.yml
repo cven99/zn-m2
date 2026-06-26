@@ -1,6 +1,10 @@
 name: Build WRT
 run-name: Build - ${{ inputs.model }}
 
+# 修复403无权限创建Release
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -30,6 +34,8 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # 屏蔽 Node20 弃用警告
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   build:
@@ -151,3 +157,11 @@ jobs:
         with:
           name: ${{ env.BUILD_DATE }}_${{ inputs.model }}
           path: ./firmware/*.*
+
+      # 新增：自动创建Release上传固件，解决你之前403报错
+      - name: Create Release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ env.BUILD_DATE }}_${{ inputs.model }}
+          files: ./firmware/*.*
+          generate_release_notes: true
